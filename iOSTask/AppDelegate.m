@@ -7,16 +7,66 @@
 //
 
 #import "AppDelegate.h"
-
+#import "AFNetworkActivityIndicatorManager.h"
+#import "MMDrawerController.h"
+#import "MMNavigationController.h"
+#import "MMExampleDrawerVisualStateManager.h"
+#import "MainViewController.h"
+#import "Constant.h"
 @interface AppDelegate ()
-
+@property (nonatomic,strong) MMDrawerController * drawerController;
 @end
 
 @implementation AppDelegate
++(AppDelegate *)sharedInstance{
+    
+    AppDelegate *appD = (AppDelegate *)[[UIApplication sharedApplication] delegate];
+    return appD;
+}
 
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // Override point for customization after application launch.
+     [AFNetworkActivityIndicatorManager sharedManager].enabled = YES;
+    
+    //Changing font and color of UINavigation Bar
+    NSShadow *shadow = [[NSShadow alloc] init];
+    [[UINavigationBar appearance] setTitleTextAttributes: [NSDictionary dictionaryWithObjectsAndKeys:[UIColor whiteColor],
+                                                           NSForegroundColorAttributeName,
+                                                           shadow, NSShadowAttributeName,
+                                                           [UIFont fontWithName:FONT_NAVIGATIONBAR size:18.0],NSFontAttributeName, nil]];
+
+    //Creating slidermennu 
+    UIStoryboard *storyBoard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+    
+    UIViewController * leftSideDrawerViewController = [storyBoard instantiateViewControllerWithIdentifier:@"leftViewController"];
+    
+    UIViewController * centerViewController = [storyBoard instantiateViewControllerWithIdentifier:@"rightViewController"]; //
+    UINavigationController * navigationController = [[MMNavigationController alloc] initWithRootViewController:centerViewController];
+   
+    UINavigationController * leftSideNavController = [[MMNavigationController alloc] initWithRootViewController:leftSideDrawerViewController];
+    
+    self.drawerController = [[MMDrawerController alloc]
+                             initWithCenterViewController:navigationController
+                             leftDrawerViewController:leftSideNavController
+                             rightDrawerViewController:nil];
+    [self.drawerController setShowsShadow:NO];
+    [self.drawerController setMaximumRightDrawerWidth:200.0];
+    [self.drawerController setOpenDrawerGestureModeMask:MMOpenDrawerGestureModeAll];
+    [self.drawerController setCloseDrawerGestureModeMask:MMCloseDrawerGestureModeAll];
+    
+    [self.drawerController
+     setDrawerVisualStateBlock:^(MMDrawerController *drawerController, MMDrawerSide drawerSide, CGFloat percentVisible) {
+         MMDrawerControllerDrawerVisualStateBlock block;
+         block = [[MMExampleDrawerVisualStateManager sharedManager]
+                  drawerVisualStateBlockForDrawerSide:drawerSide];
+         if(block){
+             block(drawerController, drawerSide, percentVisible);
+         }
+     }];
+    self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
+    
+    [self.window setRootViewController:self.drawerController];
     return YES;
 }
 
